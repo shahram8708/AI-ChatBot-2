@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Chatbot</title>
+    <title>CogiChat</title>
     <style>
         .chat-container {
             margin: auto;
@@ -19,16 +19,10 @@
             margin: 0;
             font-family: Arial, sans-serif;
             overflow-y: scroll;
-            height: 400px;
+            height: 72vh;
             border: 2px solid #ccc;
             border-radius: 10px;
             background-color: #f9f9f9;
-        }
-
-        @media screen and (min-height: 740px) {
-            .chat-messages {
-                height: 550px;
-            }
         }
 
         .chat-message {
@@ -116,35 +110,67 @@
             background-color: #0056b3;
         }
 
-        ul{
+        ul {
             list-style: none;
+        }
+
+        pre {
+            background-color: black;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            overflow-x: auto;
         }
     </style>
 </head>
 
 <body>
     <div class="chat-container">
-        <h1>AI ChatBot 2</h1>
-        <ul class="chat-messages" id="responseContainer" overflow-y: auto;">
+        <h1>CogiChat</h1>
+        <ul class="chat-messages" id="responseContainer">
         </ul>
 
         <div class="input-container">
-            <input type="text" id="userInput" name="userInput" placeholder="Type your message..." autocomplete="off"
-                style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; flex: 1;">
-            <button id="submitBtn"
-                style="padding: 10px 20px; background-color: #007bff; color: #fff; border: none; border-radius: 5px; cursor: pointer;">Send</button>
+            <input type="text" id="userInput" name="userInput" placeholder="Type your message..." autocomplete="off">
+            <button id="submitBtn">Send</button>
         </div>
 
     </div>
 
     <script>
+        function formatMessage(message) {
+            var formattedMessage = message.replace(/(?:\r\n|\r|\n)/g, '<br>');
+            formattedMessage = formattedMessage.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            formattedMessage = formattedMessage.replace(/__(.*?)__/g, '<strong>$1</strong>');
+            formattedMessage = formattedMessage.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            formattedMessage = formattedMessage.replace(/_(.*?)_/g, '<em>$1</em>');
+            formattedMessage = formattedMessage.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>');
+            formattedMessage = formattedMessage.replace(/___(.*?)___/g, '<strong><em>$1</em></strong>');
+            formattedMessage = formattedMessage.replace(/~~(.*?)~~/g, '<del>$1</del>');
+            formattedMessage = formattedMessage.replace(/`([^`]*)`/g, '<code>$1</code>');
+            formattedMessage = formattedMessage.replace(/```([^`]*)```/g, '<pre><code>$1</code></pre>');
+            formattedMessage = formattedMessage.replace(/^> (.*)/gm, '<blockquote>$1</blockquote>');
+            formattedMessage = formattedMessage.replace(/^\* (.*)/gm, '<ul><li>$1</li></ul>');
+            formattedMessage = formattedMessage.replace(/^- (.*)/gm, '<ul><li>$1</li></ul>');
+            formattedMessage = formattedMessage.replace(/^\d+\. (.*)/gm, '<ol><li>$1</li></ol>');
+            formattedMessage = formattedMessage.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>');
+            formattedMessage = formattedMessage.replace(/\!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1">');
+            formattedMessage = formattedMessage.replace(/^# (.*)/gm, '<h1>$1</h1>');
+            formattedMessage = formattedMessage.replace(/^## (.*)/gm, '<h2>$1</h2>');
+            formattedMessage = formattedMessage.replace(/^### (.*)/gm, '<h3>$1</h3>');
+            formattedMessage = formattedMessage.replace(/^#### (.*)/gm, '<h4>$1</h4>');
+            formattedMessage = formattedMessage.replace(/^##### (.*)/gm, '<h5>$1</h5>');
+            formattedMessage = formattedMessage.replace(/^###### (.*)/gm, '<h6>$1</h6>');
+            return formattedMessage;
+        }
+
         function addUserMessage(message) {
             var chatMessages = document.getElementById('responseContainer');
             var messageElement = document.createElement('li');
             messageElement.classList.add('user-message');
             var bubble = document.createElement('div');
             bubble.classList.add('message-bubble');
-            bubble.textContent = message;
+            bubble.innerHTML = formatMessage(message);
             messageElement.appendChild(bubble);
             chatMessages.appendChild(messageElement);
             chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -156,7 +182,7 @@
             messageElement.classList.add('bot-message');
             var bubble = document.createElement('div');
             bubble.classList.add('message-bubble');
-            bubble.textContent = message;
+            bubble.innerHTML = formatMessage(message);
             messageElement.appendChild(bubble);
             chatMessages.appendChild(messageElement);
             chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -178,6 +204,8 @@
                 .then(data => {
                     if (data && data.response) {
                         addBotMessage(data.response);
+                    } else if (data && data.error) {
+                        addBotMessage(data.error);
                     } else {
                         addBotMessage('No response found.');
                     }
@@ -192,6 +220,15 @@
             if (event.key === 'Enter') {
                 document.getElementById('submitBtn').click();
             }
+        });
+
+        window.addEventListener('beforeunload', function (event) {
+            event.preventDefault();
+            event.returnValue = '';
+
+            var confirmationMessage = 'Are you sure you want to leave? Any unsaved changes will be lost.';
+            event.returnValue = confirmationMessage;
+            return confirmationMessage;
         });
     </script>
 </body>
